@@ -1,7 +1,8 @@
 package src;
+
 import javax.swing.*;
 
-import src.VentanaFuncionarios.VentanaFuncionarios;
+import src.view.VentanaFuncionarios;
 
 import java.awt.*;
 import java.awt.event.*;

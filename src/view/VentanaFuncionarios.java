@@ -1,4 +1,5 @@
-package src.VentanaFuncionarios;
+package src.view;
+
 import javax.swing.*;
 
 import src.App;
@@ -32,4 +33,3 @@ public class VentanaFuncionarios extends JFrame {
         setVisible(true);
     }
 }
-
