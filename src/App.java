@@ -1,32 +1,47 @@
-package src;
-
 import javax.swing.*;
-
-import src.view.VentanaFuncionarios;
-
 import java.awt.*;
-import java.awt.event.*;
+import view.VentanaFuncionarios;
 
-// Clase principal
 public class App {
     public static void main(String[] args) {
-        JFrame frame = new JFrame("Mi App Local en Java");
-        frame.setSize(400, 300);
+        SwingUtilities.invokeLater(App::crearVentanaPrincipal);
+    }
+
+    private static void crearVentanaPrincipal() {
+        JFrame frame = new JFrame("Menú Principal - IUDigital");
+        frame.setSize(800, 500);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLayout(new BorderLayout());
-        JLabel label = new JLabel("¡Hola desde tu aplicación Java local!", SwingConstants.CENTER);
-        frame.add(label, BorderLayout.CENTER);
-        JButton btnFuncionarios = new JButton("Ir a Funcionarios");
-        frame.add(btnFuncionarios, BorderLayout.SOUTH);
-
-        btnFuncionarios.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                frame.dispose();
-                new VentanaFuncionarios();
+        frame.setLocationRelativeTo(null);
+        frame.setLayout(new GridBagLayout());
+        JPanel card = new JPanel() {
+            private Image fondo;
+            {
+                fondo = new ImageIcon("src/img/logo.png").getImage(); // ← ajusta tu ruta
             }
-        });
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (fondo != null) {
+                    g.drawImage(fondo, 0, 0, getWidth(), getHeight(), this);
+                }
+            }
+        };
+        card.setPreferredSize(new Dimension(400, 300));
+        card.setLayout(new GridBagLayout()); 
+        card.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
 
+        JButton btnFuncionarios = new JButton("Ir a Funcionarios");
+        btnFuncionarios.setBackground(new Color(59, 89, 182));
+        btnFuncionarios.setForeground(Color.WHITE);
+        btnFuncionarios.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        btnFuncionarios.setFocusPainted(false);
+        btnFuncionarios.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnFuncionarios.addActionListener(e -> {
+            frame.setVisible(false);
+            new VentanaFuncionarios(frame).setVisible(true);
+        });
+        card.add(btnFuncionarios);
+        frame.add(card);
         frame.setVisible(true);
     }
 }
