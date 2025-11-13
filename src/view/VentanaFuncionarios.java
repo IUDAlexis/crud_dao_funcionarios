@@ -1,7 +1,11 @@
 package view;
 
 import dao.FuncionarioDaoJDBC;
+import dao.TipoDocumentoJDBC;
+import dao.EstadoCivilJDBC;
+import model.EstadoCivil;
 import model.Funcionario;
+import model.TipoDocumento;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -13,33 +17,41 @@ import java.util.List;
 
 public class VentanaFuncionarios extends JFrame {
 
-    private JTextField txtId, txtNumeroId, txtNombres, txtApellidos, txtEstadoCivil,
-            txtDireccion, txtTelefono, txtFechaNacimiento;
-    private JComboBox<String> cbTipoId, cbSexo;
+    private JTextField txtId, txtNumeroId, txtNombres, txtApellidos,
+            txtDireccion, txtTelefono;
+    private JFormattedTextField txtFechaNacimiento;
+    private JComboBox<String> cbTipoId;
+    private JComboBox<String> cbEstadoCivil;
+    private JComboBox<String> cbSexo;
     private JTable tabla;
     private DefaultTableModel modeloTabla;
     private FuncionarioDaoJDBC dao;
+    private TipoDocumentoJDBC daoTipo;
+    private EstadoCivilJDBC daoEstado;
     private JFrame ventanaMenu;
 
     public VentanaFuncionarios(JFrame ventanaMenu) {
         this.ventanaMenu = ventanaMenu;
         setTitle("Gestión de Funcionarios - IUDigital");
-        setSize(1000, 600);
+        setSize(1200, 650);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout(10, 10));
 
         inicializarDAO();
         inicializarComponentes();
+        cargarListas();
         cargarTabla();
     }
 
     private void inicializarDAO() {
         try {
             dao = new FuncionarioDaoJDBC();
+            daoTipo = new TipoDocumentoJDBC();
+            daoEstado = new EstadoCivilJDBC();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this,
-                    "Error al realizar la conexión con la base de datos:\n" + ex.getMessage(),
+                    "Error al conectar con la base de datos:\n" + ex.getMessage(),
                     "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
@@ -51,46 +63,60 @@ public class VentanaFuncionarios extends JFrame {
         txtId = new JTextField();
         txtId.setEditable(false);
 
-        String[] tiposId = {"CC", "TI", "PA"};
-        cbTipoId = new JComboBox<>(tiposId);
+        cbTipoId = new JComboBox<>();
+        cbEstadoCivil = new JComboBox<>();
 
         txtNumeroId = new JTextField();
         txtNombres = new JTextField();
         txtApellidos = new JTextField();
-        txtEstadoCivil = new JTextField();
 
-        String[] sexos = {"F", "M", "Otro"};
+        String[] sexos = {
+                "Femenino", "Masculino", "No binario",
+                "Transgénero", "Transexual", "Intersexual",
+                "Prefiero no decirlo", "Otro"
+        };
         cbSexo = new JComboBox<>(sexos);
 
         txtDireccion = new JTextField();
         txtTelefono = new JTextField();
 
         try {
-            MaskFormatter fechaMask = new MaskFormatter("####-##-##");
-            fechaMask.setPlaceholderCharacter('_');
-            txtFechaNacimiento = new JFormattedTextField(fechaMask);
-        } catch (Exception ex) {
+            MaskFormatter maskFecha = new MaskFormatter("####-##-##");
+            maskFecha.setPlaceholderCharacter('_');
+            txtFechaNacimiento = new JFormattedTextField(maskFecha);
+        } catch (Exception e) {
             txtFechaNacimiento = new JFormattedTextField();
         }
-        panelForm.add(new JLabel("ID:")).setVisible(false); panelForm.add(txtId).setVisible(false); 
-        panelForm.add(new JLabel("Tipo Identificación:")); panelForm.add(cbTipoId);
-        panelForm.add(new JLabel("Número Identificación:")); panelForm.add(txtNumeroId);
-        panelForm.add(new JLabel("Nombres:")); panelForm.add(txtNombres);
-        panelForm.add(new JLabel("Apellidos:")); panelForm.add(txtApellidos);
-        panelForm.add(new JLabel("Estado Civil:")); panelForm.add(txtEstadoCivil);
-        panelForm.add(new JLabel("Sexo:")); panelForm.add(cbSexo);
-        panelForm.add(new JLabel("Dirección:")); panelForm.add(txtDireccion);
-        panelForm.add(new JLabel("Teléfono:")); panelForm.add(txtTelefono);
-        panelForm.add(new JLabel("Fecha Nacimiento:")); panelForm.add(txtFechaNacimiento);
+        panelForm.add(new JLabel("ID *:"));
+        panelForm.add(txtId);
+        panelForm.add(new JLabel("Tipo Documento *:"));
+        panelForm.add(cbTipoId);
+        panelForm.add(new JLabel("Número Identificación *:"));
+        panelForm.add(txtNumeroId);
+        panelForm.add(new JLabel("Nombres *:"));
+        panelForm.add(txtNombres);
+        panelForm.add(new JLabel("Apellidos *:"));
+        panelForm.add(txtApellidos);
+        panelForm.add(new JLabel("Estado Civil *:"));
+        panelForm.add(cbEstadoCivil);
+        panelForm.add(new JLabel("Sexo *:"));
+        panelForm.add(cbSexo);
+        panelForm.add(new JLabel("Dirección *:"));
+        panelForm.add(txtDireccion);
+        panelForm.add(new JLabel("Teléfono *:"));
+        panelForm.add(txtTelefono);
+        panelForm.add(new JLabel("Fecha Nacimiento (yyyy-MM-dd) *:"));
+        panelForm.add(txtFechaNacimiento);
 
+        // BOTONES
         JPanel panelBotones = new JPanel(new FlowLayout());
         JButton btnGuardar = new JButton("Guardar");
         JButton btnActualizar = new JButton("Actualizar");
         JButton btnEliminar = new JButton("Eliminar");
         JButton btnLimpiar = new JButton("Limpiar");
+        JButton btnEstudios = new JButton("Agregar Estado de Formación");
+        JButton btnMiembros = new JButton("Registrar Grupo Familiar");
         JButton btnVolver = new JButton("Volver al Menú");
-        JButton btnEstudios = new JButton("Registrar Estudios");
-        JButton btnMiembros = new JButton("Registrar Miembros Familiares");
 
         panelBotones.add(btnGuardar).setBackground(new Color(34, 139, 34)); btnGuardar.setForeground(Color.WHITE);
         panelBotones.add(btnActualizar).setBackground(new Color(34, 139, 34)); btnActualizar.setForeground(Color.WHITE);
@@ -99,35 +125,43 @@ public class VentanaFuncionarios extends JFrame {
         panelBotones.add(btnEstudios).setBackground(new Color(59, 89, 182)); btnEstudios.setForeground(Color.WHITE);
         panelBotones.add(btnMiembros).setBackground(new Color(59, 89, 182)); btnMiembros.setForeground(Color.WHITE);
         panelBotones.add(btnVolver).setBackground(new Color(220, 20, 60)); btnVolver.setForeground(Color.WHITE);
-
-
         // TABLA
         modeloTabla = new DefaultTableModel(
-                new String[]{"ID", "Tipo ID", "Número Identificación", "Nombres", "Apellidos",
-                        "Estado Civil", "Sexo", "Dirección", "Teléfono", "Fecha Nacimiento"}, 0);
+                new String[] { "ID", "Tipo Doc", "Número", "Nombres", "Apellidos",
+                        "Estado Civil", "Sexo", "Dirección", "Teléfono", "Fecha Nacimiento" },
+                0);
         tabla = new JTable(modeloTabla);
-        JScrollPane scroll = new JScrollPane(tabla);
+        tabla.setRowHeight(28);
+        tabla.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        tabla.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        tabla.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+
+        int[] anchos = { 60, 100, 120, 150, 150, 120, 100, 150, 120, 150 };
+        for (int i = 0; i < anchos.length; i++) {
+            tabla.getColumnModel().getColumn(i).setPreferredWidth(anchos[i]);
+        }
+
+        JScrollPane scroll = new JScrollPane(tabla,
+                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scroll.setPreferredSize(new Dimension(850, 400));
         scroll.setBorder(BorderFactory.createTitledBorder("Listado de Funcionarios"));
-        tabla.getColumnModel().getColumn(0).setMinWidth(0);
-        tabla.getColumnModel().getColumn(0).setMaxWidth(0);
-        tabla.getColumnModel().getColumn(0).setWidth(0);
-        tabla.getColumnModel().getColumn(0).setPreferredWidth(0);
-            
+
         tabla.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 int fila = tabla.getSelectedRow();
                 if (fila >= 0) {
-                    txtId.setText(String.valueOf(modeloTabla.getValueAt(fila, 0)));
+                    txtId.setText(modeloTabla.getValueAt(fila, 0).toString());
                     cbTipoId.setSelectedItem(modeloTabla.getValueAt(fila, 1).toString());
-                    txtNumeroId.setText(String.valueOf(modeloTabla.getValueAt(fila, 2)));
-                    txtNombres.setText(String.valueOf(modeloTabla.getValueAt(fila, 3)));
-                    txtApellidos.setText(String.valueOf(modeloTabla.getValueAt(fila, 4)));
-                    txtEstadoCivil.setText(String.valueOf(modeloTabla.getValueAt(fila, 5)));
+                    txtNumeroId.setText(modeloTabla.getValueAt(fila, 2).toString());
+                    txtNombres.setText(modeloTabla.getValueAt(fila, 3).toString());
+                    txtApellidos.setText(modeloTabla.getValueAt(fila, 4).toString());
+                    cbEstadoCivil.setSelectedItem(modeloTabla.getValueAt(fila, 5).toString());
                     cbSexo.setSelectedItem(modeloTabla.getValueAt(fila, 6).toString());
-                    txtDireccion.setText(String.valueOf(modeloTabla.getValueAt(fila, 7)));
-                    txtTelefono.setText(String.valueOf(modeloTabla.getValueAt(fila, 8)));
-                    txtFechaNacimiento.setText(String.valueOf(modeloTabla.getValueAt(fila, 9)));
+                    txtDireccion.setText(modeloTabla.getValueAt(fila, 7).toString());
+                    txtTelefono.setText(modeloTabla.getValueAt(fila, 8).toString());
+                    txtFechaNacimiento.setText(modeloTabla.getValueAt(fila, 9).toString());
                 }
             }
         });
@@ -144,17 +178,66 @@ public class VentanaFuncionarios extends JFrame {
         add(panelBotones, BorderLayout.SOUTH);
     }
 
+    private void cargarListas() {
+        try {
+            cbTipoId.removeAllItems();
+            cbEstadoCivil.removeAllItems();
+
+            for (TipoDocumento t : daoTipo.listarTodos())
+                cbTipoId.addItem(t.getNombre());
+            for (EstadoCivil e : daoEstado.listarTodos())
+                cbEstadoCivil.addItem(e.getNombre());
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error cargando listas: " + e.getMessage());
+        }
+    }
+
+    private boolean validarCampos() {
+        if (cbTipoId.getSelectedItem() == null ||
+                cbEstadoCivil.getSelectedItem() == null ||
+                txtNumeroId.getText().trim().isEmpty() ||
+                txtNombres.getText().trim().isEmpty() ||
+                txtApellidos.getText().trim().isEmpty() ||
+                txtDireccion.getText().trim().isEmpty() ||
+                txtTelefono.getText().trim().isEmpty() ||
+                txtFechaNacimiento.getText().contains("_")) {
+            JOptionPane.showMessageDialog(this,
+                    "Todos los campos marcados con * son obligatorios.",
+                    "Campos requeridos", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+        try {
+            LocalDate.parse(txtFechaNacimiento.getText());
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "La fecha debe tener formato válido (yyyy-MM-dd).",
+                    "Error de formato", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+        return true;
+    }
+
     private void guardarFuncionario() {
         try {
+            if (!validarCampos())
+                return;
+            if (Long.parseLong(txtId.getText()) > 0) {
+                JOptionPane.showMessageDialog(this, "EL Funcionario ya existe, por favor use el boton actualizar");
+                return;
+            }
             Funcionario f = new Funcionario();
-            f.setTipoIdentificacion((String) cbTipoId.getSelectedItem());
-            f.setNumeroIdentificacion(txtNumeroId.getText());
-            f.setNombres(txtNombres.getText());
-            f.setApellidos(txtApellidos.getText());
-            f.setEstadoCivil(txtEstadoCivil.getText());
-            f.setSexo((String) cbSexo.getSelectedItem());
-            f.setDireccion(txtDireccion.getText());
-            f.setTelefono(txtTelefono.getText());
+            TipoDocumento tipo = obtenerTipoDocumentoPorNombre(cbTipoId.getSelectedItem().toString());
+            EstadoCivil estado = obtenerEstadoCivilPorNombre(cbEstadoCivil.getSelectedItem().toString());
+
+            f.setTipoDocumento(tipo);
+            f.setEstadoCivil(estado);
+            f.setNumeroIdentificacion(txtNumeroId.getText().trim());
+            f.setNombres(txtNombres.getText().trim());
+            f.setApellidos(txtApellidos.getText().trim());
+            f.setSexo(cbSexo.getSelectedItem().toString());
+            f.setDireccion(txtDireccion.getText().trim());
+            f.setTelefono(txtTelefono.getText().trim());
             f.setFechaNacimiento(LocalDate.parse(txtFechaNacimiento.getText()));
 
             dao.insertar(f);
@@ -162,7 +245,7 @@ public class VentanaFuncionarios extends JFrame {
             cargarTabla();
             limpiarCampos();
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Error al guardar los datos: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "Error al guardar: " + ex.getMessage());
         }
     }
 
@@ -172,16 +255,19 @@ public class VentanaFuncionarios extends JFrame {
             return;
         }
         try {
+            if (!validarCampos())
+                return;
+
             Funcionario f = new Funcionario();
-            f.setIdFuncionario(Integer.parseInt(txtId.getText()));
-            f.setTipoIdentificacion((String) cbTipoId.getSelectedItem());
-            f.setNumeroIdentificacion(txtNumeroId.getText());
-            f.setNombres(txtNombres.getText());
-            f.setApellidos(txtApellidos.getText());
-            f.setEstadoCivil(txtEstadoCivil.getText());
-            f.setSexo((String) cbSexo.getSelectedItem());
-            f.setDireccion(txtDireccion.getText());
-            f.setTelefono(txtTelefono.getText());
+            f.setFuncionarioId(Long.parseLong(txtId.getText()));
+            f.setTipoDocumento(obtenerTipoDocumentoPorNombre(cbTipoId.getSelectedItem().toString()));
+            f.setEstadoCivil(obtenerEstadoCivilPorNombre(cbEstadoCivil.getSelectedItem().toString()));
+            f.setNumeroIdentificacion(txtNumeroId.getText().trim());
+            f.setNombres(txtNombres.getText().trim());
+            f.setApellidos(txtApellidos.getText().trim());
+            f.setSexo(cbSexo.getSelectedItem().toString());
+            f.setDireccion(txtDireccion.getText().trim());
+            f.setTelefono(txtTelefono.getText().trim());
             f.setFechaNacimiento(LocalDate.parse(txtFechaNacimiento.getText()));
 
             dao.actualizar(f);
@@ -189,7 +275,7 @@ public class VentanaFuncionarios extends JFrame {
             cargarTabla();
             limpiarCampos();
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Error al actualizar los datos: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "Error al actualizar: " + ex.getMessage());
         }
     }
 
@@ -198,16 +284,16 @@ public class VentanaFuncionarios extends JFrame {
             JOptionPane.showMessageDialog(this, "Seleccione un funcionario para eliminar");
             return;
         }
-        int id = Integer.parseInt(txtId.getText());
-        int confirm = JOptionPane.showConfirmDialog(this, "¿Eliminar funcionario?", "Confirmar", JOptionPane.YES_NO_OPTION);
+        int confirm = JOptionPane.showConfirmDialog(this, "¿Eliminar funcionario?", "Confirmar",
+                JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
             try {
-                dao.eliminar(id);
-                JOptionPane.showMessageDialog(this, "Registro de funcionario eliminado correctamente");
+                dao.eliminar(Long.parseLong(txtId.getText()));
+                JOptionPane.showMessageDialog(this, "Funcionario eliminado correctamente");
                 cargarTabla();
                 limpiarCampos();
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Error al eliminar los datos: " + ex.getMessage());
+                JOptionPane.showMessageDialog(this, "Error al eliminar: " + ex.getMessage());
             }
         }
     }
@@ -215,10 +301,10 @@ public class VentanaFuncionarios extends JFrame {
     private void limpiarCampos() {
         txtId.setText("");
         cbTipoId.setSelectedIndex(0);
+        cbEstadoCivil.setSelectedIndex(0);
         txtNumeroId.setText("");
         txtNombres.setText("");
         txtApellidos.setText("");
-        txtEstadoCivil.setText("");
         cbSexo.setSelectedIndex(0);
         txtDireccion.setText("");
         txtTelefono.setText("");
@@ -230,13 +316,13 @@ public class VentanaFuncionarios extends JFrame {
         try {
             List<Funcionario> lista = dao.listarTodos();
             for (Funcionario f : lista) {
-                modeloTabla.addRow(new Object[]{
-                        f.getIdFuncionario(),
-                        f.getTipoIdentificacion(),
+                modeloTabla.addRow(new Object[] {
+                        f.getFuncionarioId(),
+                        f.getTipoDocumento().getNombre(),
                         f.getNumeroIdentificacion(),
                         f.getNombres(),
                         f.getApellidos(),
-                        f.getEstadoCivil(),
+                        f.getEstadoCivil().getNombre(),
                         f.getSexo(),
                         f.getDireccion(),
                         f.getTelefono(),
@@ -244,12 +330,39 @@ public class VentanaFuncionarios extends JFrame {
                 });
             }
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Error al cargar la información de la tabla: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "Error al cargar tabla: " + ex.getMessage());
         }
     }
 
     private void volverAlMenu() {
         dispose();
-        if (ventanaMenu != null) ventanaMenu.setVisible(true);
+        if (ventanaMenu != null)
+            ventanaMenu.setVisible(true);
+    }
+
+    private TipoDocumento obtenerTipoDocumentoPorNombre(String nombre) {
+        try {
+            for (TipoDocumento t : daoTipo.listarTodos()) {
+                if (t.getNombre().equalsIgnoreCase(nombre)) {
+                    return t;
+                }
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error obteniendo TipoDocumento: " + e.getMessage());
+        }
+        return null;
+    }
+
+    private EstadoCivil obtenerEstadoCivilPorNombre(String nombre) {
+        try {
+            for (EstadoCivil e : daoEstado.listarTodos()) {
+                if (e.getNombre().equalsIgnoreCase(nombre)) {
+                    return e;
+                }
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error obteniendo EstadoCivil: " + e.getMessage());
+        }
+        return null;
     }
 }
