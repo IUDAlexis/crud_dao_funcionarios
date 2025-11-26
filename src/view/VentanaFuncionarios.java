@@ -29,7 +29,6 @@ public class VentanaFuncionarios extends JFrame {
 
     private JFrame ventanaMenu;
 
-    // ✔ Usamos SOLO EL CONTROLLER
     private FuncionarioController controller = new FuncionarioController();
 
     public VentanaFuncionarios(JFrame ventanaMenu) {
@@ -90,35 +89,46 @@ public class VentanaFuncionarios extends JFrame {
             txtFechaNacimiento = new JFormattedTextField();
         }
 
-        panelForm.add(new JLabel("ID *:")); panelForm.add(txtId);
-        panelForm.add(new JLabel("Tipo Documento *:")); panelForm.add(cbTipoId);
-        panelForm.add(new JLabel("Número Identificación *:")); panelForm.add(txtNumeroId);
-        panelForm.add(new JLabel("Nombres *:")); panelForm.add(txtNombres);
-        panelForm.add(new JLabel("Apellidos *:")); panelForm.add(txtApellidos);
-        panelForm.add(new JLabel("Estado Civil *:")); panelForm.add(cbEstadoCivil);
-        panelForm.add(new JLabel("Sexo *:")); panelForm.add(cbSexo);
-        panelForm.add(new JLabel("Dirección *:")); panelForm.add(txtDireccion);
-        panelForm.add(new JLabel("Teléfono *:")); panelForm.add(txtTelefono);
-        panelForm.add(new JLabel("Fecha Nacimiento (yyyy-MM-dd) *:")); panelForm.add(txtFechaNacimiento);
+        panelForm.add(new JLabel("ID *:"));
+        panelForm.add(txtId);
+        panelForm.add(new JLabel("Tipo Documento *:"));
+        panelForm.add(cbTipoId);
+        panelForm.add(new JLabel("Número Identificación *:"));
+        panelForm.add(txtNumeroId);
+        panelForm.add(new JLabel("Nombres *:"));
+        panelForm.add(txtNombres);
+        panelForm.add(new JLabel("Apellidos *:"));
+        panelForm.add(txtApellidos);
+        panelForm.add(new JLabel("Estado Civil *:"));
+        panelForm.add(cbEstadoCivil);
+        panelForm.add(new JLabel("Sexo *:"));
+        panelForm.add(cbSexo);
+        panelForm.add(new JLabel("Dirección *:"));
+        panelForm.add(txtDireccion);
+        panelForm.add(new JLabel("Teléfono *:"));
+        panelForm.add(txtTelefono);
+        panelForm.add(new JLabel("Fecha Nacimiento (yyyy-MM-dd) *:"));
+        panelForm.add(txtFechaNacimiento);
 
         // BOTONES
         JPanel panelBotones = new JPanel(new FlowLayout());
         JButton btnGuardar = new JButton("Guardar");
-        JButton btnActualizar = new JButton("Actualizar");
+        // JButton btnActualizar = new JButton("Actualizar");
         JButton btnEliminar = new JButton("Eliminar");
         JButton btnLimpiar = new JButton("Limpiar");
         JButton btnVolver = new JButton("Volver al Menú");
 
         panelBotones.add(btnGuardar);
-        panelBotones.add(btnActualizar);
+        // panelBotones.add(btnActualizar);
         panelBotones.add(btnEliminar);
         panelBotones.add(btnLimpiar);
         panelBotones.add(btnVolver);
 
         // TABLA
         modeloTabla = new DefaultTableModel(
-                new String[]{"ID", "Tipo Doc", "Número", "Nombres", "Apellidos",
-                        "Estado Civil", "Sexo", "Dirección", "Teléfono", "Fecha Nacimiento"}, 0);
+                new String[] { "ID", "Tipo Doc", "Número", "Nombres", "Apellidos",
+                        "Estado Civil", "Sexo", "Dirección", "Teléfono", "Fecha Nacimiento" },
+                0);
 
         tabla = new JTable(modeloTabla);
 
@@ -143,9 +153,8 @@ public class VentanaFuncionarios extends JFrame {
             }
         });
 
-        // ACCIONES BOTONES — ✔ TODAS CAMBIADAS A CONTROLLER
-        btnGuardar.addActionListener(e -> guardarFuncionario());
-        btnActualizar.addActionListener(e -> actualizarFuncionario());
+        btnGuardar.addActionListener(e -> guardar());
+        // btnActualizar.addActionListener(e -> actualizarFuncionario());
         btnEliminar.addActionListener(e -> eliminarFuncionario());
         btnLimpiar.addActionListener(e -> limpiarCampos());
         btnVolver.addActionListener(e -> volverAlMenu());
@@ -170,7 +179,6 @@ public class VentanaFuncionarios extends JFrame {
         }
     }
 
-    // VALIDACIÓN
     private boolean validarCampos() {
         if (cbTipoId.getSelectedItem() == null ||
                 cbEstadoCivil.getSelectedItem() == null ||
@@ -197,10 +205,18 @@ public class VentanaFuncionarios extends JFrame {
         return true;
     }
 
-    // GUARDAR FUNCIONARIO — ✔ usando controller
+    private void guardar() {
+         if (!txtId.getText().isEmpty()) {
+               actualizarFuncionario();
+            }else {
+            guardarFuncionario();
+        }
+    }
+
     private void guardarFuncionario() {
         try {
-            if (!validarCampos()) return;
+            if (!validarCampos())
+                return;
 
             if (!txtId.getText().isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Este funcionario ya existe. Use Actualizar.");
@@ -219,7 +235,6 @@ public class VentanaFuncionarios extends JFrame {
         }
     }
 
-    // ACTUALIZAR FUNCIONARIO — ✔ usando controller
     private void actualizarFuncionario() {
         try {
             if (txtId.getText().isEmpty()) {
@@ -227,7 +242,8 @@ public class VentanaFuncionarios extends JFrame {
                 return;
             }
 
-            if (!validarCampos()) return;
+            if (!validarCampos())
+                return;
 
             Funcionario f = construirFuncionarioDesdeFormulario();
             f.setFuncionarioId(Long.parseLong(txtId.getText()));
@@ -243,7 +259,6 @@ public class VentanaFuncionarios extends JFrame {
         }
     }
 
-    // ELIMINAR FUNCIONARIO — ✔ usando controller
     private void eliminarFuncionario() {
         if (txtId.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Seleccione un funcionario");
@@ -267,7 +282,6 @@ public class VentanaFuncionarios extends JFrame {
         }
     }
 
-    // CONSTRUYE OBJETO FUNCIONARIO DESDE FORMULARIO
     private Funcionario construirFuncionarioDesdeFormulario() {
         Funcionario f = new Funcionario();
 
@@ -284,7 +298,6 @@ public class VentanaFuncionarios extends JFrame {
         return f;
     }
 
-    // LIMPIAR FORMULARIO
     private void limpiarCampos() {
         txtId.setText("");
         cbTipoId.setSelectedIndex(0);
@@ -298,7 +311,6 @@ public class VentanaFuncionarios extends JFrame {
         txtFechaNacimiento.setText("");
     }
 
-    // CARGAR TABLA — ✔ usando controller
     private void cargarTabla() {
         modeloTabla.setRowCount(0);
 
@@ -306,7 +318,7 @@ public class VentanaFuncionarios extends JFrame {
             List<Funcionario> lista = controller.listarFuncionarios();
 
             for (Funcionario f : lista) {
-                modeloTabla.addRow(new Object[]{
+                modeloTabla.addRow(new Object[] {
                         f.getFuncionarioId(),
                         f.getTipoDocumento().getNombre(),
                         f.getNumeroIdentificacion(),
@@ -334,18 +346,22 @@ public class VentanaFuncionarios extends JFrame {
     private TipoDocumento obtenerTipoDocumentoPorNombre(String nombre) {
         try {
             for (TipoDocumento t : daoTipo.listarTodos()) {
-                if (t.getNombre().equalsIgnoreCase(nombre)) return t;
+                if (t.getNombre().equalsIgnoreCase(nombre))
+                    return t;
             }
-        } catch (Exception ignored) { }
+        } catch (Exception ignored) {
+        }
         return null;
     }
 
     private EstadoCivil obtenerEstadoCivilPorNombre(String nombre) {
         try {
             for (EstadoCivil e : daoEstado.listarTodos()) {
-                if (e.getNombre().equalsIgnoreCase(nombre)) return e;
+                if (e.getNombre().equalsIgnoreCase(nombre))
+                    return e;
             }
-        } catch (Exception ignored) { }
+        } catch (Exception ignored) {
+        }
         return null;
     }
 }

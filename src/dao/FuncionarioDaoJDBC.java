@@ -14,7 +14,7 @@ public class FuncionarioDaoJDBC implements FuncionarioDao {
     @Override
     public void insertar(Funcionario f) {
         String sql = "INSERT INTO funcionarios (numero_identificacion, nombres, apellidos, sexo, direccion, telefono, fecha_nacimiento, estado_civil_id, tipo_documento_id) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection con = ConexionDB.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -32,14 +32,14 @@ public class FuncionarioDaoJDBC implements FuncionarioDao {
             ps.executeUpdate();
 
         } catch (SQLException e) {
-            System.err.println("Error al insertar funcionario: " + e.getMessage());
+            throw new DataAccessException("Error al insertar funcionario", e);
         }
     }
 
     @Override
     public void actualizar(Funcionario f) {
         String sql = "UPDATE funcionarios SET numero_identificacion=?, nombres=?, apellidos=?, sexo=?, direccion=?, telefono=?, fecha_nacimiento=?, estado_civil_id=?, tipo_documento_id=? "
-                + "WHERE funcionario_id=?";
+                   + "WHERE funcionario_id=?";
 
         try (Connection con = ConexionDB.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -55,10 +55,13 @@ public class FuncionarioDaoJDBC implements FuncionarioDao {
             ps.setInt(9, (int) f.getTipoDocumento().getTipoDocumentoId());
             ps.setInt(10, (int) f.getFuncionarioId());
 
-            ps.executeUpdate();
+            int rows = ps.executeUpdate();
+            if (rows == 0) {
+                throw new DataAccessException("No se encontró el funcionario para actualizar");
+            }
 
         } catch (SQLException e) {
-            System.err.println("Error al actualizar funcionario: " + e.getMessage());
+            throw new DataAccessException("Error al actualizar funcionario", e);
         }
     }
 
@@ -70,22 +73,26 @@ public class FuncionarioDaoJDBC implements FuncionarioDao {
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, id);
-            ps.executeUpdate();
+
+            int rows = ps.executeUpdate();
+            if (rows == 0) {
+                throw new DataAccessException("No se encontró el funcionario para eliminar");
+            }
 
         } catch (SQLException e) {
-            System.err.println("Error al eliminar funcionario: " + e.getMessage());
+            throw new DataAccessException("Error al eliminar funcionario", e);
         }
     }
 
     @Override
     public Funcionario buscarPorId(int idFuncionario) {
         String sql = "SELECT f.funcionario_id, f.numero_identificacion, f.nombres, f.apellidos, f.sexo, f.direccion, f.telefono, f.fecha_nacimiento, "
-                + "ec.estado_civil_id, ec.nombre AS estado_civil_nombre, "
-                + "td.tipo_documento_id, td.nombre AS tipo_documento_nombre "
-                + "FROM funcionarios f "
-                + "LEFT JOIN estado_civil ec ON f.estado_civil_id = ec.estado_civil_id "
-                + "LEFT JOIN tipo_documento td ON f.tipo_documento_id = td.tipo_documento_id "
-                + "WHERE f.funcionario_id=?";
+                   + "ec.estado_civil_id, ec.nombre AS estado_civil_nombre, "
+                   + "td.tipo_documento_id, td.nombre AS tipo_documento_nombre "
+                   + "FROM funcionarios f "
+                   + "LEFT JOIN estado_civil ec ON f.estado_civil_id = ec.estado_civil_id "
+                   + "LEFT JOIN tipo_documento td ON f.tipo_documento_id = td.tipo_documento_id "
+                   + "WHERE f.funcionario_id=?";
 
         try (Connection con = ConexionDB.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -94,8 +101,8 @@ public class FuncionarioDaoJDBC implements FuncionarioDao {
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    Funcionario f = new Funcionario();
 
+                    Funcionario f = new Funcionario();
                     f.setFuncionarioId(rs.getInt("funcionario_id"));
                     f.setNumeroIdentificacion(rs.getString("numero_identificacion"));
                     f.setNombres(rs.getString("nombres"));
@@ -120,14 +127,14 @@ public class FuncionarioDaoJDBC implements FuncionarioDao {
                     f.setTipoDocumento(td);
 
                     return f;
+                } else {
+                    return null;
                 }
             }
 
         } catch (SQLException e) {
-            System.err.println("Error al buscar funcionario por ID: " + e.getMessage());
+            throw new DataAccessException("Error al buscar funcionario por ID", e);
         }
-
-        return null; // si no existe
     }
 
     @Override
@@ -135,11 +142,11 @@ public class FuncionarioDaoJDBC implements FuncionarioDao {
         List<Funcionario> lista = new ArrayList<>();
 
         String sql = "SELECT f.funcionario_id, f.numero_identificacion, f.nombres, f.apellidos, f.sexo, f.direccion, f.telefono, f.fecha_nacimiento, "
-                + "ec.estado_civil_id, ec.nombre AS estado_civil_nombre, "
-                + "td.tipo_documento_id, td.nombre AS tipo_documento_nombre "
-                + "FROM funcionarios f "
-                + "LEFT JOIN estado_civil ec ON f.estado_civil_id = ec.estado_civil_id "
-                + "LEFT JOIN tipo_documento td ON f.tipo_documento_id = td.tipo_documento_id";
+                   + "ec.estado_civil_id, ec.nombre AS estado_civil_nombre, "
+                   + "td.tipo_documento_id, td.nombre AS tipo_documento_nombre "
+                   + "FROM funcionarios f "
+                   + "LEFT JOIN estado_civil ec ON f.estado_civil_id = ec.estado_civil_id "
+                   + "LEFT JOIN tipo_documento td ON f.tipo_documento_id = td.tipo_documento_id";
 
         try (Connection con = ConexionDB.getConnection();
              Statement st = con.createStatement();
@@ -175,7 +182,7 @@ public class FuncionarioDaoJDBC implements FuncionarioDao {
             }
 
         } catch (SQLException e) {
-            System.err.println("Error al listar funcionarios: " + e.getMessage());
+            throw new DataAccessException("Error al listar funcionarios", e);
         }
 
         return lista;
